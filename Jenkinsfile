@@ -1,9 +1,7 @@
 pipeline {
     agent any
     
-    environment {
-        GIT_CREDENTIALS_ID = 'your-git-credentials-id' // Replace with your Jenkins credentials ID
-    }
+   
 
     stages {
         stage('Checkout') {
