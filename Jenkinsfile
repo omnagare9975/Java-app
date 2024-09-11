@@ -6,9 +6,12 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/omnagare9975/simple-java-project.git'
+                // Checkout from the correct repository URL
+                checkout([$class: 'GitSCM', 
+                          userRemoteConfigs: [[url: 'https://github.com/omnagare9975/Java-app.git', credentialsId: "${env.GIT_CREDENTIALS_ID}"]], 
+                          branches: [[name: '*/main']]]) // Ensure the branch name is correct
             }
         }
 
