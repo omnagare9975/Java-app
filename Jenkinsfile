@@ -1,47 +1,52 @@
 pipeline {
     agent any
-
+    
     environment {
-        DEPENDENCY_CHECK_HOME = '/var/jenkins_home/dependency-check'
+        GIT_CREDENTIALS_ID = 'your-git-credentials-id' // Replace with your Jenkins credentials ID
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout from the correct repository URL
+                // Checkout the code from GitHub
                 checkout([$class: 'GitSCM', 
                           userRemoteConfigs: [[url: 'https://github.com/omnagare9975/Java-app.git', credentialsId: "${env.GIT_CREDENTIALS_ID}"]], 
-                          branches: [[name: '*/main']]]) // Ensure the branch name is correct
+                          branches: [[name: '*/main']]])
             }
         }
-
+        
         stage('Build') {
             steps {
-                // Use Maven tool specified in Jenkins global configuration
-                tool name: 'Maven 3.8.6', type: 'maven'
+                // Using Maven from the environment, without specifying a version
                 sh 'mvn clean install'
             }
         }
 
         stage('OWASP Dependency-Check') {
             steps {
-                dependencyCheck odcInstallation: 'Default',
-                                additionalArguments: '--format HTML --format XML --outdir dependency-check-report --scan .'
+                // OWASP Dependency-Check steps
+                sh 'mvn org.owasp:dependency-check-maven:check'
             }
         }
 
         stage('Archive Reports') {
             steps {
-                archiveArtifacts artifacts: 'dependency-check-report/**/*'
-                publishHTML target: [
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'dependency-check-report',
-                    reportFiles: 'dependency-check-report.html',
-                    reportName: 'OWASP Dependency-Check Report'
-                ]
+                // Archive reports
+                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true,
+                             reportDir: 'target/site', reportFiles: 'index.html', reportName: 'HTML Report'])
             }
+        }
+    }
+    
+    post {
+        always {
+            // Cleanup actions if necessary
+            echo 'Pipeline completed'
+        }
+        failure {
+            // Actions to take on failure
+            echo 'Build failed'
         }
     }
 }
